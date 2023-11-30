@@ -28,13 +28,10 @@ $vBuyerNo = isset($_COOKIE['vBuyerNo']) ? $_COOKIE['vBuyerNo'] : ''; // Ganti de
 $vNoPackList = 1; // Ganti dengan logic sesuai kebutuhan
 $vShipMode = 10; // Ganti dengan logic sesuai kebutuhan
 
-// Tangkap data dari formulir
-$vMaxPcsKarton = isset($_POST['vMaxPcsKarton']) ? validateInput($_POST['vMaxPcsKarton']) : '';
+//Ambil nilai vmax dari cookie
+$vMaxPcsKarton = isset($_COOKIE['vMaxPcsKarton']) ? $_COOKIE['vMaxPcsKarton'] : '';
 
-// Validasi data
-if (!is_numeric($vMaxPcsKarton)) {
-    die("Wrong qty max pcs per carton");
-}
+var_dump($vMaxPcsKarton);
 
 // Mulai Hitung
 $sqlColor = "SELECT DISTINCT color FROM sap_cfm WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo' ORDER BY color";
