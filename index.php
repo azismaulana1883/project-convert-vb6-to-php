@@ -48,6 +48,35 @@
             $conn->close();
             ?>
         </select>
+        <br>
+        <label for="choose_size">Choose a size:</label>
+        <select name="size" id="vSize">
+            <?php
+            // Ambil data ukuran dari database
+            $servername = "localhost";
+            $username = "root";
+            $password = "";
+            $dbname = "erp_web";
+
+            $conn = new mysqli($servername, $username, $password, $dbname);
+
+            if ($conn->connect_error) {
+                die("Koneksi gagal: " . $conn->connect_error);
+            }
+
+            $sqlSize = "SELECT size FROM mastersize";
+            $resultSize = $conn->query($sqlSize);
+
+            if ($resultSize->num_rows > 0) {
+                while ($rowSize = $resultSize->fetch_assoc()) {
+                    echo '<option value="' . $rowSize['size'] . '">' . $rowSize['size'] . '</option>';
+                }
+            }
+
+            $conn->close();
+            ?>
+        </select>
+        <br>
         <button type="submit">Proses Data</button>
     </form>
 </body>
