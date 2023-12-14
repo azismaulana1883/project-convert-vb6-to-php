@@ -26,22 +26,112 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
 
     // Lakukan query untuk copy data
     global $colors; // Gunakan variabel global
-    $colorsString = implode("','", $colors); // Menggabungkan nilai array menjadi string terpisah oleh koma
-    global $vCartNo3;
-    var_dump($vCartNo3);
-    $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, buyerno, color) 
-                SELECT kpno, cart_no, buyerno, articleno 
-                FROM tmpexppacklist 
-                WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'";
-    $resultCopy = $connTblPkli->query($sqlCopy);
+    $colorsString = implode("','", $colors); // Menggabungkan
+    global $selectedKarton;
+    $result = explode('-', $selectedKarton);
+    global $vDestNya;
+    $buyerCode = getBuyerCode($vKPNo); // Fungsi untuk mendapatkan buyercode dari sap_cfm
+    $itemCode = getItem($vKPNo); // Fungsi untuk mendapatkan buyercode dari sap_cfm
+    var_dump($itemCode);
+    // die;
 
-    // Tambahkan penanganan kesalahan jika perlu
-    if (!$resultCopy) {
-        die("Error dalam mengeksekusi query copy to tbl_pkli: " . $connTblPkli->error);
+    // Hapus data lama dari tbl_pkli
+    $sqlDelete = "DELETE FROM tbl_pkli WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo'";
+    $connTblPkli->query($sqlDelete);
+
+    // Ambil semua nilai ukuran dari tmpexppacklist
+    $sqlGetSize = "SELECT DISTINCT size1, size2, size3, size4, size5, size6, size7, size8, size9, size10
+                   FROM tmpexppacklist
+                   WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'";
+    $resultGetSize = $connTblPkli->query($sqlGetSize);
+
+    if (!$resultGetSize) {
+        die("Error dalam mengeksekusi query get sizes: " . $connTblPkli->error);
+    }
+
+    $sizes = $resultGetSize->fetch_assoc();
+    $sizes = array_filter($sizes); // Hapus nilai-nilai null atau kosong
+
+    foreach ($sizes as $size) {
+        // Gunakan setiap ukuran untuk memasukkan nilai ke dalam tbl_pkli
+        $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, buyerno, color, size, buyercode,item,dest) 
+                    SELECT kpno, cart_no, buyerno, articleno, '$size', '$buyerCode','$itemCode','$vDestNya'
+                    FROM tmpexppacklist 
+                    WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'";
+
+        $resultCopy = $connTblPkli->query($sqlCopy);
+
+        // Tambahkan penanganan kesalahan jika perlu
+        if (!$resultCopy) {
+            die("Error dalam mengeksekusi query copy to tbl_pkli: " . $connTblPkli->error);
+        }
     }
 
     // Tutup koneksi ke database tbl_pkli
     $connTblPkli->close();
+}
+
+// Fungsi untuk mendapatkan buyercode dari sap_cfm
+function getBuyerCode($kpno) {
+    // Lakukan koneksi ke database
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+    $dbname = "erp_web";
+
+    $conn = new mysqli($servername, $username, $password, $dbname);
+
+    // Periksa koneksi
+    if ($conn->connect_error) {
+        die("Koneksi gagal: " . $conn->connect_error);
+    }
+
+    // Lakukan query untuk mendapatkan buyercode dari sap_cfm
+    $sql = "SELECT buyercode FROM sap_cfm WHERE kpno='$kpno'";
+    $result = $conn->query($sql);
+
+    if (!$result) {
+        die("Error dalam mengeksekusi query getBuyerCode: " . $conn->error);
+    }
+
+    $row = $result->fetch_assoc();
+    $buyerCode = $row['buyercode'];
+
+    // Tutup koneksi ke database
+    $conn->close();
+
+    return $buyerCode;
+}
+
+function getItem($kpno) {
+    // Lakukan koneksi ke database
+    $servername = "localhost";
+    $username = "root";
+    $password = "";
+    $dbname = "erp_web";
+
+    $conn = new mysqli($servername, $username, $password, $dbname);
+
+    // Periksa koneksi
+    if ($conn->connect_error) {
+        die("Koneksi gagal: " . $conn->connect_error);
+    }
+
+    // Lakukan query untuk mendapatkan Item dari sap_cfm
+    $sql = "SELECT item FROM sap_cfm WHERE kpno='$kpno'";
+    $result = $conn->query($sql);
+
+    if (!$result) {
+        die("Error dalam mengeksekusi query getItem: " . $conn->error);
+    }
+
+    $row = $result->fetch_assoc();
+    $itemCode = $row['item'];
+
+    // Tutup koneksi ke database
+    $conn->close();
+
+    return $itemCode;
 }
 
 // Lakukan koneksi ke database
@@ -116,11 +206,6 @@ if (!is_numeric($vMaxPcsKarton)) {
         setcookie("vBuyerNo", $vBuyerNo, time() + (86400 * 30), "/");
         setcookie("vMaxPcsKarton", $vMaxPcsKarton, time() + (86400 * 30), "/");
 
-        // // Tambahkan data baru ke tmpexppacklist
-        // $sqlInsert = "INSERT INTO tmpexppacklist (kpno, buyerno, shipmode) VALUES ('$vKPNo', '$vBuyerNo', '10')";
-        // $resultInsert = $conn->query($sqlInsert);
-        // var_dump($resultInsert);
-
         if ($resultCheck === false) {
             echo '<script>';
             echo 'alert("Gagal membuat data baru.");';
@@ -161,7 +246,6 @@ $A = 1; // Definisikan $A di sini
                 $resultSize = $conn->query($sqlSize);
                 var_dump($resultSize);
                 
-
                 if ($resultSize === false) {
                     die("Error dalam query: " . $conn->error);
                 }
