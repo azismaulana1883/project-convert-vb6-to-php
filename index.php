@@ -26,36 +26,38 @@
                 <input type="text" class="form-control" name="vMaxPcsKarton" id="vMaxPcsKarton" required>
             </div>
             <div class="form-group">
-                <label for="choose_karton">Choose a karton:</label>
-                <select class="form-control" name="karton" id="vKarton">
-                    <?php
-                    // Ambil data karton dari database
-                    $servername = "localhost";
-                    $username = "root";
-                    $password = "";
-                    $dbname = "erp_web";
+    <label for="choose_karton">Choose a karton:</label>
+    <select class="form-control" name="karton" id="vKarton">
+        <?php
+        // Ambil data karton dari database
+        $servername = "localhost";
+        $username = "root";
+        $password = "";
+        $dbname = "erp_web";
 
-                    $conn = new mysqli($servername, $username, $password, $dbname);
+        $conn = new mysqli($servername, $username, $password, $dbname);
 
-                    if ($conn->connect_error) {
-                        die("Koneksi gagal: " . $conn->connect_error);
-                    }
+        if ($conn->connect_error) {
+            die("Koneksi gagal: " . $conn->connect_error);
+        }
 
-                    $sqlKarton = "SELECT buyer, jenis_karton, berat_karton, cbm_karton FROM tbl_karton";
-                    $resultKarton = $conn->query($sqlKarton);
+        $sqlKarton = "SELECT id_karton, buyer, jenis_karton, berat_karton, cbm_karton FROM tbl_karton";
+        $resultKarton = $conn->query($sqlKarton);
 
-                    if ($resultKarton->num_rows > 0) {
-                        while ($rowKarton = $resultKarton->fetch_assoc()) {
-                            echo '<option value="' . $rowKarton['buyer'] . '-' . $rowKarton['jenis_karton'] . '-' . $rowKarton['berat_karton'] . '-' . $rowKarton['cbm_karton'] . '">'
-                                . 'Buyer: ' . $rowKarton['buyer'] . ', Jenis Karton: ' . $rowKarton['jenis_karton'] . ', Berat Karton: ' . $rowKarton['berat_karton'] . ', CBM Karton: ' . $rowKarton['cbm_karton']
-                                . '</option>';
-                        }
-                    }
+        if ($resultKarton->num_rows > 0) {
+            while ($rowKarton = $resultKarton->fetch_assoc()) {
+                echo '<option value="' . $rowKarton['id_karton'] . '-' . $rowKarton['buyer'] . '-' . $rowKarton['jenis_karton'] . '-' . $rowKarton['berat_karton'] . '-' . $rowKarton['cbm_karton'] . '">'
+                    . 'id_karton: ' . $rowKarton['id_karton']
+                    . ', Buyer: ' . $rowKarton['buyer'] . ', Jenis Karton: ' . $rowKarton['jenis_karton'] . ', Berat Karton: ' . $rowKarton['berat_karton'] . ', CBM Karton: ' . $rowKarton['cbm_karton']
+                    . '</option>';
+            }
+        }
 
-                    $conn->close();
-                    ?>
-                </select>
-            </div>
+        $conn->close();
+        ?>
+    </select>
+</div>
+
             <button type="submit" class="btn btn-primary">Proses Data</button>
         </form>
     </div>

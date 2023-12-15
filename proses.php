@@ -29,6 +29,7 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
     $colorsString = implode("','", $colors); // Menggabungkan
     global $selectedKarton;
     $result = explode('-', $selectedKarton);
+    $id_karton = $result[0];
     global $vDestNya;
     $buyerCode = getBuyerCode($vKPNo); // Fungsi untuk mendapatkan buyercode dari sap_cfm
     $itemCode = getItem($vKPNo); // Fungsi untuk mendapatkan buyercode dari sap_cfm
@@ -59,8 +60,8 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
 
     foreach ($sizes as $size) {
         // Gunakan setiap ukuran untuk memasukkan nilai ke dalam tbl_pkli
-        $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, buyerno, color, size, buyercode,item,dest) 
-                    SELECT kpno, cart_no, buyerno, articleno, '$size', '$buyerCode','$itemCode','$vDestNya'
+        $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, buyerno, color, size, buyercode,item,dest,id_jenis_karton) 
+                    SELECT kpno, cart_no, buyerno, articleno, '$size', '$buyerCode','$itemCode','$vDestNya','$id_karton'
                     FROM tmpexppacklist 
                     WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'";
 
@@ -169,7 +170,7 @@ $selectedKarton = isset($_POST['karton']) ? $_POST['karton'] : '';
 
 $pecah = explode("-", $selectedKarton);
 
-$jenis_karton = $pecah[2];
+$jenis_karton = $pecah[3];
 
 if (!is_numeric($vMaxPcsKarton)) {
     echo '<script>';
