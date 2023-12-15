@@ -35,11 +35,16 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
     var_dump($itemCode);
     // die;
 
+    $check = "select * from tbl_pkli where kpno = '$vKPNo' AND buyerno='$vBuyerNo'";
+    $resultCheck = $connTblPkli->query($check);
+    
+    if($resultCheck->num_rows > 0) 
+    {
     // Hapus data lama dari tbl_pkli
-    $sqlDelete = "DELETE FROM tbl_pkli WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo'";
-    $connTblPkli->query($sqlDelete);
-
-    // Ambil semua nilai ukuran dari tmpexppacklist
+        $sqlDelete = "DELETE FROM tbl_pkli WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo'";
+        $connTblPkli->query($sqlDelete);
+    } else {
+        // Ambil semua nilai ukuran dari tmpexppacklist
     $sqlGetSize = "SELECT DISTINCT size1, size2, size3, size4, size5, size6, size7, size8, size9, size10
                    FROM tmpexppacklist
                    WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'";
@@ -66,7 +71,7 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
             die("Error dalam mengeksekusi query copy to tbl_pkli: " . $connTblPkli->error);
         }
     }
-
+}   
     // Tutup koneksi ke database tbl_pkli
     $connTblPkli->close();
 }
