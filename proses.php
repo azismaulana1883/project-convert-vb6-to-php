@@ -9,6 +9,7 @@ function validateInput($data) {
     return $data;
 }
 
+// Fungsi Copy to tbl_pkli
 function copyToTblPkli($vKPNo, $vBuyerNo) {
     // Lakukan koneksi ke database tbl_pkli
     $servername = "localhost";
@@ -42,52 +43,51 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
         $sqlDelete = "DELETE FROM tbl_pkli WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo'";
         $connTblPkli->query($sqlDelete);
     } else {
-        $sqlGetSizeAndQty = "SELECT DISTINCT cart_no, size1, qty1, size2, qty2, size3, qty3, size4, qty4, size5, qty5, size6, qty6, size7, qty7, size8, qty8, size9, qty9, size10, qty10
-                     FROM tmpexppacklist
-                     WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'
-                     ORDER BY CAST(SUBSTRING_INDEX(cart_no, '-', -1) AS UNSIGNED) ASC, cart_no ASC";
+        // Ambil semua nilai ukuran dan qty yang memiliki qty > 0 dari tmpexppacklist
+    $sqlGetSizeAndQty = "SELECT DISTINCT cart_no, size1, qty1, size2, qty2, size3, qty3, size4, qty4, size5, qty5, size6, qty6, size7, qty7, size8, qty8, size9, qty9, size10, qty10
+                         FROM tmpexppacklist
+                         WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'
+                         ORDER BY CAST(SUBSTRING_INDEX(cart_no, '-', -1) AS UNSIGNED) ASC, cart_no ASC";
 
-        $resultGetSizeAndQty = $connTblPkli->query($sqlGetSizeAndQty);
+    $resultGetSizeAndQty = $connTblPkli->query($sqlGetSizeAndQty);
 
-        if (!$resultGetSizeAndQty) {
-            die("Error dalam mengeksekusi query get sizes and qty: " . $connTblPkli->error);
-        }
+    if (!$resultGetSizeAndQty) {
+        die("Error dalam mengeksekusi query get sizes and qty: " . $connTblPkli->error);
+    }
 
-        while ($row = $resultGetSizeAndQty->fetch_assoc()) {
-            $cart_no = $row['cart_no'];
+    while ($row = $resultGetSizeAndQty->fetch_assoc()) {
+        $cartNo = $row['cart_no'];
 
-            // Hanya proses jika cart_no memiliki tanda "-"
-            if (strpos($cart_no, '-') !== false) {
-                for ($i = 1; $i <= 10; $i++) {
-                    $sizeCol = "size" . $i;
-                    $qtyCol = "qty" . $i;
+        // Mendapatkan nilai awal dan akhir dari rentang
+        list($start, $end) = explode('-', $cartNo);
+        $start = (int)$start;
+        $end = (int)$end;
 
-                    $size = $row[$sizeCol];
-                    $qty = $row[$qtyCol];
+        // Mengganti jumlah duplikasi sesuai dengan rentang
+        $duplicateCount = $end - $start + 1;
 
-                    if ($size && $qty > 0) {
-                        // Gunakan setiap ukuran untuk memasukkan nilai ke dalam tbl_pkli
-                        $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, buyerno, color, size, buyercode, item, dest, id_jenis_karton) 
-                                    SELECT kpno, '$cart_no', buyerno, articleno, '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton'
-                                    FROM tmpexppacklist 
-                                    WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo' AND $sizeCol IS NOT NULL AND $qtyCol > 0";
+        // Duplikasi setiap baris sebanyak yang dibutuhkan
+        for ($i = 0; $i < $duplicateCount; $i++) {
+            // Gunakan setiap ukuran untuk memasukkan nilai ke dalam tbl_pkli
+            $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, buyerno, color, size, buyercode, item, dest, id_jenis_karton) 
+                        SELECT kpno, cart_no, buyerno, articleno, size1, '$buyerCode', '$itemCode', '$vDestNya', '$id_karton'
+                        FROM tmpexppacklist 
+                        WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo' AND cart_no='$cartNo'";
+            $resultCopy = $connTblPkli->query($sqlCopy);
 
-                        $resultCopy = $connTblPkli->query($sqlCopy);
-
-                        // Tambahkan penanganan kesalahan jika perlu
-                        if (!$resultCopy) {
-                            die("Error dalam mengeksekusi query copy to tbl_pkli: " . $connTblPkli->error);
-                        }
-                    }
-                }
+            // Tambahkan penanganan kesalahan jika perlu
+            if (!$resultCopy) {
+                die("Error dalam mengeksekusi query copy to tbl_pkli: " . $connTblPkli->error);
             }
         }
-
-        // Setelah semua data disalin, tambahkan nomor karton secara unik
-        $sqlUpdateNoKarton = "UPDATE tbl_pkli SET no_karton = (@counter := @counter + 1) WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo' AND no_karton_range IS NOT NULL";
-        $connTblPkli->query("SET @counter = 0"); // Inisialisasi counter
-        $connTblPkli->query($sqlUpdateNoKarton);
     }
+
+    // Setelah semua data disalin, tambahkan nomor karton secara unik
+    $sqlUpdateNoKarton = "UPDATE tbl_pkli SET no_karton = (@counter := @counter + 1) WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo' AND no_karton_range IS NOT NULL";
+    $connTblPkli->query("SET @counter = 0"); // Inisialisasi counter
+    $connTblPkli->query($sqlUpdateNoKarton);
+    }
+
     // Tutup koneksi ke database tbl_pkli
     $connTblPkli->close();
 }
