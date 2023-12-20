@@ -34,43 +34,51 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
     $buyerCode = getBuyerCode($vKPNo); // Fungsi untuk mendapatkan buyercode dari sap_cfm
     $itemCode = getItem($vKPNo); // Fungsi untuk mendapatkan buyercode dari sap_cfm
 
-     $check = "select * from tbl_pkli where kpno = '$vKPNo' AND buyerno='$vBuyerNo'";
+    // Check apakah data sudah ada di tbl_pkli
+    $check = "SELECT * FROM tbl_pkli WHERE kpno = '$vKPNo' AND buyerno='$vBuyerNo'";
     $resultCheck = $connTblPkli->query($check);
 
     if ($resultCheck->num_rows > 0) {
-         // Hapus data lama dari tbl_pkli
+        // Hapus data lama dari tbl_pkli
         $sqlDelete = "DELETE FROM tbl_pkli WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo'";
         $connTblPkli->query($sqlDelete);
     } else {
-        // Ambil semua nilai ukuran dari tmpexppacklist
-        $sqlGetSize = "SELECT DISTINCT size1, size2, size3, size4, size5, size6, size7, size8, size9, size10
-                       FROM tmpexppacklist
-                       WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'";
-        $resultGetSize = $connTblPkli->query($sqlGetSize);
-    
-        if (!$resultGetSize) {
-            die("Error dalam mengeksekusi query get sizes: " . $connTblPkli->error);
+        // Ambil semua nilai ukuran dan qty yang memiliki qty > 0 dari tmpexppacklist
+        $sqlGetSizeAndQty = "SELECT DISTINCT size1, qty1, size2, qty2, size3, qty3, size4, qty4, size5, qty5, size6, qty6, size7, qty7, size8, qty8, size9, qty9, size10, qty10
+                             FROM tmpexppacklist
+                             WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'";
+
+        $resultGetSizeAndQty = $connTblPkli->query($sqlGetSizeAndQty);
+
+        if (!$resultGetSizeAndQty) {
+            die("Error dalam mengeksekusi query get sizes and qty: " . $connTblPkli->error);
         }
-    
-        $sizes = $resultGetSize->fetch_assoc();
-        $sizes = array_filter($sizes); // Hapus nilai-nilai null atau kosong
-    
-        // Loop pertama: Copy data
-        foreach ($sizes as $size) {
-            // Gunakan setiap ukuran untuk memasukkan nilai ke dalam tbl_pkli
-            $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, buyerno, color, size, buyercode, item, dest, id_jenis_karton) 
-                        SELECT kpno, cart_no, buyerno, articleno, '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton'
-                        FROM tmpexppacklist 
-                        WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'";
-    
-            $resultCopy = $connTblPkli->query($sqlCopy);
-    
-            // Tambahkan penanganan kesalahan jika perlu
-            if (!$resultCopy) {
-                die("Error dalam mengeksekusi query copy to tbl_pkli: " . $connTblPkli->error);
+
+        while ($row = $resultGetSizeAndQty->fetch_assoc()) {
+            for ($i = 1; $i <= 10; $i++) {
+                $sizeCol = "size" . $i;
+                $qtyCol = "qty" . $i;
+
+                $size = $row[$sizeCol];
+                $qty = $row[$qtyCol];
+
+                if ($size && $qty > 0) {
+                    // Gunakan setiap ukuran untuk memasukkan nilai ke dalam tbl_pkli
+                    $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, buyerno, color, size, buyercode, item, dest, id_jenis_karton) 
+                                SELECT kpno, cart_no, buyerno, articleno, '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton'
+                                FROM tmpexppacklist 
+                                WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo' AND $sizeCol IS NOT NULL AND $qtyCol > 0";
+
+                    $resultCopy = $connTblPkli->query($sqlCopy);
+
+                    // Tambahkan penanganan kesalahan jika perlu
+                    if (!$resultCopy) {
+                        die("Error dalam mengeksekusi query copy to tbl_pkli: " . $connTblPkli->error);
+                    }
+                }
             }
         }
-    
+
         // Setelah semua data disalin, tambahkan nomor karton secara unik
         $sqlUpdateNoKarton = "UPDATE tbl_pkli SET no_karton = (@counter := @counter + 1) WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo' AND no_karton_range IS NOT NULL";
         $connTblPkli->query("SET @counter = 0"); // Inisialisasi counter
