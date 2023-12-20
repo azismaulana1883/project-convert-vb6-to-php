@@ -42,10 +42,10 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
         $sqlDelete = "DELETE FROM tbl_pkli WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo'";
         $connTblPkli->query($sqlDelete);
     } else {
-        // Ambil semua nilai ukuran dan qty yang memiliki qty > 0 dari tmpexppacklist
         $sqlGetSizeAndQty = "SELECT DISTINCT cart_no, size1, qty1, size2, qty2, size3, qty3, size4, qty4, size5, qty5, size6, qty6, size7, qty7, size8, qty8, size9, qty9, size10, qty10
-                             FROM tmpexppacklist
-                             WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'";
+                     FROM tmpexppacklist
+                     WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'
+                     ORDER BY CAST(SUBSTRING_INDEX(cart_no, '-', -1) AS UNSIGNED) ASC, cart_no ASC";
 
         $resultGetSizeAndQty = $connTblPkli->query($sqlGetSizeAndQty);
 
