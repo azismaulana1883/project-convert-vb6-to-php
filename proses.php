@@ -9,7 +9,6 @@ function validateInput($data) {
     return $data;
 }
 
-// Fungsi Copy to tbl_pkli
 function copyToTblPkli($vKPNo, $vBuyerNo) {
     // Lakukan koneksi ke database tbl_pkli
     $servername = "localhost";
@@ -44,7 +43,7 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
         $connTblPkli->query($sqlDelete);
     } else {
         // Ambil semua nilai ukuran dan qty yang memiliki qty > 0 dari tmpexppacklist
-        $sqlGetSizeAndQty = "SELECT DISTINCT size1, qty1, size2, qty2, size3, qty3, size4, qty4, size5, qty5, size6, qty6, size7, qty7, size8, qty8, size9, qty9, size10, qty10
+        $sqlGetSizeAndQty = "SELECT DISTINCT cart_no, size1, qty1, size2, qty2, size3, qty3, size4, qty4, size5, qty5, size6, qty6, size7, qty7, size8, qty8, size9, qty9, size10, qty10
                              FROM tmpexppacklist
                              WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo'";
 
@@ -55,25 +54,30 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
         }
 
         while ($row = $resultGetSizeAndQty->fetch_assoc()) {
-            for ($i = 1; $i <= 10; $i++) {
-                $sizeCol = "size" . $i;
-                $qtyCol = "qty" . $i;
+            $cart_no = $row['cart_no'];
 
-                $size = $row[$sizeCol];
-                $qty = $row[$qtyCol];
+            // Hanya proses jika cart_no memiliki tanda "-"
+            if (strpos($cart_no, '-') !== false) {
+                for ($i = 1; $i <= 10; $i++) {
+                    $sizeCol = "size" . $i;
+                    $qtyCol = "qty" . $i;
 
-                if ($size && $qty > 0) {
-                    // Gunakan setiap ukuran untuk memasukkan nilai ke dalam tbl_pkli
-                    $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, buyerno, color, size, buyercode, item, dest, id_jenis_karton) 
-                                SELECT kpno, cart_no, buyerno, articleno, '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton'
-                                FROM tmpexppacklist 
-                                WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo' AND $sizeCol IS NOT NULL AND $qtyCol > 0";
+                    $size = $row[$sizeCol];
+                    $qty = $row[$qtyCol];
 
-                    $resultCopy = $connTblPkli->query($sqlCopy);
+                    if ($size && $qty > 0) {
+                        // Gunakan setiap ukuran untuk memasukkan nilai ke dalam tbl_pkli
+                        $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, buyerno, color, size, buyercode, item, dest, id_jenis_karton) 
+                                    SELECT kpno, '$cart_no', buyerno, articleno, '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton'
+                                    FROM tmpexppacklist 
+                                    WHERE kpno='$vKPNo' AND articleno IN ('$colorsString') AND buyerno='$vBuyerNo' AND $sizeCol IS NOT NULL AND $qtyCol > 0";
 
-                    // Tambahkan penanganan kesalahan jika perlu
-                    if (!$resultCopy) {
-                        die("Error dalam mengeksekusi query copy to tbl_pkli: " . $connTblPkli->error);
+                        $resultCopy = $connTblPkli->query($sqlCopy);
+
+                        // Tambahkan penanganan kesalahan jika perlu
+                        if (!$resultCopy) {
+                            die("Error dalam mengeksekusi query copy to tbl_pkli: " . $connTblPkli->error);
+                        }
                     }
                 }
             }
@@ -87,6 +91,7 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
     // Tutup koneksi ke database tbl_pkli
     $connTblPkli->close();
 }
+
 
 
 // Fungsi untuk mendapatkan buyercode dari sap_cfm
