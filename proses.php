@@ -79,8 +79,8 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
                     $qty = $row[$qtyCol];
 
                     if ($size !== null && $qty > 0) {
-                        $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, no_karton, buyerno, color, size, buyercode, item, dest, id_jenis_karton, qty_pack) 
-                                    VALUES ('$vKPNo', '$noKartonRange', $i, '$vBuyerNo', '{$row['articleno']}', '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton', '$qty')";
+                        $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, no_karton, buyerno, size, buyercode, item, dest, id_jenis_karton, qty_pack) 
+                                    VALUES ('$vKPNo', '$noKartonRange', $i, '$vBuyerNo', '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton', '$qty')";
                         $resultCopy = $conn->query($sqlCopy);
 
                         if (!$resultCopy) {
@@ -103,8 +103,8 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
                 $qty = $row[$qtyCol];
 
                 if ($size !== null && $qty > 0) {
-                    $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, no_karton, buyerno, color, size, buyercode, item, dest, id_jenis_karton, qty_pack) 
-                                VALUES ('$vKPNo', '$noKartonRange', $noKarton, '$vBuyerNo', '{$row['articleno']}', '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton', '$qty')";
+                    $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, no_karton, buyerno, size, buyercode, item, dest, id_jenis_karton, qty_pack) 
+                                VALUES ('$vKPNo', '$noKartonRange', $noKarton, '$vBuyerNo', '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton', '$qty')";
                     $resultCopy = $conn->query($sqlCopy);
 
                     if (!$resultCopy) {
