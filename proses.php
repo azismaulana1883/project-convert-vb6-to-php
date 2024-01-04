@@ -38,9 +38,8 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
         // Hapus data lama dari tbl_pkli
         $sqlDelete = "DELETE FROM tbl_pkli WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo'";
         $conn->query($sqlDelete);
-    }
-
-    // Ambil semua nilai ukuran dan qty yang memiliki qty > 0 dari tmpexppacklist
+    } else {
+        // Ambil semua nilai ukuran dan qty yang memiliki qty > 0 dari tmpexppacklist
     $sqlSize = "SELECT DISTINCT cart_no, size1, qty1, size2, qty2, size3, qty3, size4, qty4, size5, qty5, size6, qty6, size7, qty7, size8, qty8, size9, qty9, size10, qty10
                  FROM tmpexppacklist
                  WHERE kpno='$vKPNo' AND articleno IN ('$colors') AND buyerno='$vBuyerNo'
@@ -79,8 +78,8 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
                     $qty = $row[$qtyCol];
 
                     if ($size !== null && $qty > 0) {
-                        $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, no_karton, buyerno, size, buyercode, item, dest, id_jenis_karton, qty_pack) 
-                                    VALUES ('$vKPNo', '$noKartonRange', $i, '$vBuyerNo', '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton', '$qty')";
+                        $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, no_karton, buyerno, color, size, buyercode, item, dest, id_jenis_karton, qty_pack) 
+                                    VALUES ('$vKPNo', '$noKartonRange', $i, '$vBuyerNo', '$colors', '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton', '$qty')";
                         $resultCopy = $conn->query($sqlCopy);
 
                         if (!$resultCopy) {
@@ -103,8 +102,8 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
                 $qty = $row[$qtyCol];
 
                 if ($size !== null && $qty > 0) {
-                    $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, no_karton, buyerno, size, buyercode, item, dest, id_jenis_karton, qty_pack) 
-                                VALUES ('$vKPNo', '$noKartonRange', $noKarton, '$vBuyerNo', '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton', '$qty')";
+                    $sqlCopy = "INSERT INTO tbl_pkli (kpno, no_karton_range, no_karton, buyerno, color, size, buyercode, item, dest, id_jenis_karton, qty_pack) 
+                                VALUES ('$vKPNo', '$noKartonRange', $noKarton, '$vBuyerNo', '$colors', '$size', '$buyerCode', '$itemCode', '$vDestNya', '$id_karton', '$qty')";
                     $resultCopy = $conn->query($sqlCopy);
 
                     if (!$resultCopy) {
@@ -114,7 +113,7 @@ function copyToTblPkli($vKPNo, $vBuyerNo) {
             }
         }
     }
-
+}    
     // Setelah semua data disalin, tambahkan nomor karton secara unik
     $sqlUpdateNoKarton = "UPDATE tbl_pkli SET no_karton = (@counter := @counter + 1) WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo' AND no_karton_range IS NOT NULL";
     $conn->query("SET @counter = 0"); // Inisialisasi counter
@@ -298,7 +297,7 @@ function process($vKPNo, $vBuyerNo)
 } else {
     // Pengecekan data sebelum eksekusi query
     $sqlCheck = "SELECT * FROM tmpexppacklist WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo' AND shipmode='10'";
-    echo "Query Check: $sqlCheck";
+    // echo "Query Check: $sqlCheck";
     $resultCheck = $conn->query($sqlCheck);
 
     if ($resultCheck === false) {
@@ -344,9 +343,9 @@ function process($vKPNo, $vBuyerNo)
             $A = 1; // Definisikan $A di sini
             // Mulai Hitung
             $sqlColor = "SELECT DISTINCT color FROM sap_cfm WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo' ORDER BY color";
-            echo "Query Color: $sqlColor";
+            // echo "Query Color: $sqlColor";
             $resultColor = $conn->query($sqlColor);
-            var_dump($resultColor);
+            // var_dump($resultColor);
 
             if (!$resultColor) {
                 die("Error dalam query: " . $conn->error);
@@ -358,22 +357,22 @@ function process($vKPNo, $vBuyerNo)
             while ($rowColor = $resultColor->fetch_assoc()) {
                 $vColorNya = $rowColor['color'];
                 $colors = array(); // Inisialisasi array color
-                echo "Inside first loop: $vColorNya";
+                // echo "Inside first loop: $vColorNya";
 
                 // Simpan nilai color dalam array
                 $colors[] = $vColorNya;
-                echo "Before query execution";
+                // echo "Before query execution";
                 $sqlSize = "SELECT a.*, SUM(a.qty_order) AS qty FROM sap_cfm a
                             INNER JOIN mastersize s ON a.size = s.size
                             WHERE a.kpno='$vKPNo' AND a.buyerno='$vBuyerNo' AND a.color='$vColorNya'
                             GROUP BY a.size ORDER BY s.urut";
                 $resultSize = $conn->query($sqlSize);
-                var_dump($resultSize);
+                // var_dump($resultSize);
                 
                 if ($resultSize === false) {
                     die("Error dalam query: " . $conn->error);
                 }
-                echo "After query execution";
+                // echo "After query execution";
 
                 if (!$resultSize) {
                     die("Error dalam query: " . $conn->error);
@@ -419,10 +418,10 @@ function process($vKPNo, $vBuyerNo)
 
                             VALUES ('$vKPNo', $vMaxPcsKarton, $jml_karton, '$vCartNo3', '127.0.0.1', '$vBuyerNo', '$vColorNya', $vNoPackList, '$vShipMode', '$vDestNya', '$jenis_karton','$vMaxPcsKarton')";
 
-                        var_dump("Sql Insert Mulai Hitung",$sqlInsert);
+                        // var_dump("Sql Insert Mulai Hitung",$sqlInsert);
 
                         $conn->query($sqlInsert);
-                        var_dump("Sql Insert Setelah Eksekusi", $sqlInsert);
+                        // var_dump("Sql Insert Setelah Eksekusi", $sqlInsert);
 
                         if ($conn->error) {
                             echo "Error executing query: " . $conn->error;
@@ -431,9 +430,9 @@ function process($vKPNo, $vBuyerNo)
                         }
                         // Update nilai size pada tabel tmpexppacklist
                         $vSizeNya = "size" . $Number_Size;
-                        var_dump("Value of vSizeNya:", $vSizeNya);
+                        //var_dump("Value of vSizeNya:", $vSizeNya);
                         $sqlUpdateSize = "UPDATE tmpexppacklist SET $vSizeNya = '$vSize' WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo' AND articleno='$vColorNya'";
-                        echo "SQL Update Query: $sqlUpdateSize";
+                        // echo "SQL Update Query: $sqlUpdateSize";
                         $resultUpdateSize = $conn->query($sqlUpdateSize);
 
                         if (!$resultUpdateSize) {
@@ -454,7 +453,7 @@ function process($vKPNo, $vBuyerNo)
 //Sisaan
 $A = 1;
 while ($A <= count($lvExpPackList)) {
-    echo "Inside second loop: $A";
+    // echo "Inside second loop: $A";
 
     if (isset($lvExpPackList[$A - 1])) {
         $vMaxPcsKartonSisa = $lvExpPackList[$A - 1]; // Perbaikan typo di sini
@@ -466,7 +465,7 @@ while ($A <= count($lvExpPackList)) {
             $sqlInsertSisaan = "INSERT INTO tmpexppacklist (kpno, $vQty1, jml_karton, cart_no, ip, buyerno, articleno, nopacklist, shipmode, dest, jenis_karton, maxpcs)
                 VALUES ('$vKPNo', $vMaxPcsKartonSisa, 1, '$vCartNo2', '127.0.0.1', '$vBuyerNo', '$vColorNya', $vNoPackList, '$vShipMode', '$vDestNya', '$jenis_karton', '$vMaxPcsKarton')";
 
-            var_dump("sql insert sisaan", $sqlInsertSisaan);
+            // var_dump("sql insert sisaan", $sqlInsertSisaan);
 
             $conn->query($sqlInsertSisaan);
 
@@ -479,7 +478,7 @@ while ($A <= count($lvExpPackList)) {
             // Update nilai size pada tabel tmpexppacklist
             $vSizeNya = "size" . $A;
             $sqlUpdateSizeSisaan = "UPDATE tmpexppacklist SET $vSizeNya = '{$LvSize[$A - 1]['Text']}' WHERE kpno='$vKPNo' AND buyerno='$vBuyerNo' AND articleno='$vColorNya' AND cart_no='$vCartNo2'";
-            var_dump("size sisaan", $sqlUpdateSizeSisaan);
+            // var_dump("size sisaan", $sqlUpdateSizeSisaan);
             $resultUpdateSizeSisaan = $conn->query($sqlUpdateSizeSisaan);
 
             if (!$resultUpdateSizeSisaan) {
@@ -504,7 +503,7 @@ while ($A <= count($LvSize)) {
         $sql = "UPDATE tmpexppacklist SET $vSz = '$vSizeText' WHERE ip='$IPx'" .
                " AND kpno='$vKPNo' AND buyerno='$vBuyerNo' AND articleno='$vColorNya' AND shipmode='" . ($vShipMode === "" ? $vShipModeWIP : $vShipMode) . "'";
 
-        var_dump("SQL UPDATE", $sql);
+        // var_dump("SQL UPDATE", $sql);
 
         // Eksekusi query ke database PHP di sini
         $result = mysqli_query($conn, $sql);
@@ -514,7 +513,8 @@ while ($A <= count($LvSize)) {
             die("Error dalam mengeksekusi query: " . mysqli_error($conn));
         } else {
             // Log bahwa elemen ditemukan dan diupdate
-            echo "SQL UPDATE berhasil: " . $sql . "\n";
+            // echo "SQL UPDATE berhasil: " . $sql . "\n";
+            echo "SQL UPDATE berhasil:";
         }
     } else {
         // Log atau tanggapi bahwa elemen tidak ditemukan di $LvSize
@@ -539,5 +539,5 @@ while ($A <= count($LvSize)) {
     }
   }
 }
-process($vKPNo, $vBuyerNo);
+process(['vKPNo'],['vBuyerNo']);
 ?>
